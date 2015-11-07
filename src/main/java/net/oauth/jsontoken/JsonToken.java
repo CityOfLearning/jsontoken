@@ -24,12 +24,12 @@ import com.google.gson.JsonPrimitive;
 import net.oauth.jsontoken.crypto.AsciiStringSigner;
 import net.oauth.jsontoken.crypto.SignatureAlgorithm;
 import net.oauth.jsontoken.crypto.Signer;
-
 import org.apache.commons.codec.binary.Base64;
-import org.joda.time.Instant;
 
 import java.security.SignatureException;
-
+import java.time.Instant;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * A JSON Token.
@@ -181,29 +181,29 @@ public class JsonToken {
   }
 
   public Instant getIssuedAt() {
-    Long issuedAt = getParamAsLong(ISSUED_AT);
-    if (issuedAt == null) {
-      return null;
-    }
-    // JWT represents time in seconds, Instants expect milliseconds
-    return new Instant(issuedAt * 1000);
+      Long issuedAt = getParamAsLong(ISSUED_AT);
+      if (issuedAt == null) {
+          return null;
+      }
+      // JWT represents time in seconds
+      return Instant.ofEpochSecond(issuedAt);
   }
 
   public void setIssuedAt(Instant instant) {
-    setParam(JsonToken.ISSUED_AT, instant.getMillis() / 1000);
+      setParam(JsonToken.ISSUED_AT, instant.getEpochSecond());
   }
 
   public Instant getExpiration() {
-    Long expiration = getParamAsLong(EXPIRATION);
-    if (expiration == null) {
-      return null;
-    }
-    // JWT represents time in seconds, Instants expect milliseconds
-    return new Instant(expiration * 1000);
+      Long expiration = getParamAsLong(EXPIRATION);
+      if (expiration == null) {
+          return null;
+      }
+      // JWT represents time in seconds
+      return Instant.ofEpochSecond(expiration);
   }
 
   public void setExpiration(Instant instant) {
-    setParam(JsonToken.EXPIRATION, instant.getMillis() / 1000);
+      setParam(JsonToken.EXPIRATION, instant.getEpochSecond());
   }
 
   public String getAudience() {

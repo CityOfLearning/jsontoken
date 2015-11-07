@@ -18,8 +18,6 @@ package net.oauth.signatures;
 
 import java.security.SignatureException;
 
-import javax.servlet.http.HttpServletRequest;
-
 import net.oauth.jsontoken.Clock;
 import net.oauth.jsontoken.JsonTokenParser;
 import net.oauth.jsontoken.SystemClock;
@@ -56,7 +54,7 @@ public class  SignedJsonAssertionTokenParser {
    * @param nonceChecker An optional nonce checker. If not null, then the parser will
    *   call the nonce checker to make sure that the nonce has not been re-used.JsonTokenParser
    * @param clock a clock that has implemented the
-   *   {@link Clock#isCurrentTimeInInterval(org.joda.time.Instant, org.joda.time.Duration)} method
+   *   {@link net.oauth.jsontoken.Clock#isCurrentTimeInInterval(java.time.Instant, java.time.Instant)} method
    *   with a suitable slack to account for clock skew when checking token validity.
    */
   public SignedJsonAssertionTokenParser(VerifierProviders locators, NonceChecker nonceChecker,
@@ -65,7 +63,8 @@ public class  SignedJsonAssertionTokenParser {
     this.nonceChecker = nonceChecker;
     this.clock = clock;
   }
-  
+
+
   /**
    * Extracts the Json assertion from the Http post body and then verifies it.
    * @param request the {@link HttpServletRequest} that contains the signed Json assertion in the
@@ -74,7 +73,8 @@ public class  SignedJsonAssertionTokenParser {
    * @throws SignatureException if the signature doesn't check out, or if authentication fails
    *   for other reason.
    */
-  public SignedJsonAssertionToken parseToken(HttpServletRequest request) throws SignatureException {      
+  /*
+  public SignedJsonAssertionToken parseToken(HttpServletRequest request) throws SignatureException {
     if (!request.getContentType().startsWith(EXPECTED_CONTENT_TYPE)) {
       throw new SignatureException("bad content type: " + request.getContentType());
     }
@@ -97,6 +97,7 @@ public class  SignedJsonAssertionTokenParser {
 
     return parseToken(assertion, uri.toString());
   }
+  */
 
   /**
    * Parses the provided signed Json assertion, and then verifies it against the provided HTTP method
@@ -106,7 +107,7 @@ public class  SignedJsonAssertionTokenParser {
    * @return the signed Json assertion token (deserialized)
    * @throws SignatureException if the signature (or anything else) doesn't check out.
    */
-  public SignedJsonAssertionToken parseToken(String jsonAssertion, String uri) throws SignatureException {
+  public SignedJsonAssertionToken parseToken(String jsonAssertion, String uri) throws Exception {
     JsonTokenParser parser = new JsonTokenParser(clock, locators, new SignedJsonAssertionAudienceChecker(uri));
 
     SignedJsonAssertionToken token = new SignedJsonAssertionToken(parser.verifyAndDeserialize(jsonAssertion));

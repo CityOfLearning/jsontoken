@@ -16,9 +16,8 @@
  */
 package net.oauth.jsontoken.discovery;
 
+import java.util.HashMap;
 import java.util.Map;
-
-import com.google.common.collect.Maps;
 
 import net.oauth.jsontoken.JsonTokenParser;
 import net.oauth.jsontoken.crypto.SignatureAlgorithm;
@@ -36,7 +35,7 @@ import net.oauth.jsontoken.crypto.Verifier;
  */
 public class VerifierProviders {
 
-  private final Map<SignatureAlgorithm, VerifierProvider> map = Maps.newHashMap();
+  private final Map<SignatureAlgorithm, VerifierProvider> map = new HashMap<SignatureAlgorithm, VerifierProvider>();
 
   /**
    * Sets a new {@link VerifierProvider} for the given {@link SignatureAlgorithm}.

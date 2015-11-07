@@ -16,44 +16,115 @@
  */
 package net.oauth.jsontoken;
 
-import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.codec.binary.StringUtils;
-
-import com.google.common.base.Joiner;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.StringUtils;
+
+import java.util.Map;
 
 /**
  * Some utility functions for {@link JsonToken}s.
  */
-class JsonTokenUtil {
+public class JsonTokenUtil {
 
-  static public final String DELIMITER = ".";
+	static public final String DELIMITER = ".";
 
-  public static String toBase64(JsonObject json) {
-    return convertToBase64(toJson(json));
-  }
+	public static String toBase64(JsonObject json) {
+		return convertToBase64(toJson(json));
+	}
 
-  public static String toJson(JsonObject json) {
-    return new Gson().toJson(json);
-  }
+	public static String toJson(JsonObject json) {
+		return new Gson().toJson(json);
+	}
 
-  public static String convertToBase64(String source) {
-    return Base64.encodeBase64URLSafeString(StringUtils.getBytesUtf8(source));
-  }
-  
-  public static String decodeFromBase64String(String encoded) {
-    return new String(Base64.decodeBase64(encoded));
-  }
-  
-  public static String fromBase64ToJsonString(String source) {
-    return StringUtils.newStringUtf8(Base64.decodeBase64(source));
-  }
-  
-  public static String toDotFormat(String... parts) {
-    return Joiner.on('.').useForNull("").join(parts);
-  }
-  
-  private JsonTokenUtil() { }
+	public static String convertToBase64(String source) {
+		return Base64.encodeBase64URLSafeString(StringUtils.getBytesUtf8(source));
+	}
+
+	public static String decodeFromBase64String(String encoded) {
+		return new String(Base64.decodeBase64(encoded));
+	}
+
+	public static String fromBase64ToJsonString(String source) {
+		return StringUtils.newStringUtf8(Base64.decodeBase64(source));
+	}
+
+	/*
+	 * public static String toDotFormat(String... parts) { return
+	 * Joiner.on('.').useForNull("").join(parts); }
+	 */
+
+	public static String toDotFormat(String... parts) {
+		StringBuilder sb = new StringBuilder();
+		String prefix = "";
+		for (String n : parts) {
+			sb.append(prefix);
+			prefix = ".";
+			if (n == null) {
+				n = "";
+			}
+			sb.append(n);
+		}
+		return sb.toString();
+	}
+
+	/**
+	 * Ensures that an object reference passed as a parameter to the calling
+	 * method is not null.
+	 *
+	 * @param reference
+	 *            an object reference
+	 * @return the non-null reference that was validated
+	 * @throws NullPointerException
+	 *             if {@code reference} is null
+	 */
+	public static <T> T checkNotNull(T reference) {
+		if (reference == null) {
+			throw new NullPointerException();
+		}
+		return reference;
+	}
+
+	/**
+	 * Ensures that an object reference passed as a parameter to the calling
+	 * method is not null.
+	 *
+	 * @param reference
+	 *            an object reference
+	 * @param errorMessage
+	 *            the exception message to use if the check fails; will be
+	 *            converted to a string using {@link String#valueOf(Object)}
+	 * @return the non-null reference that was validated
+	 * @throws NullPointerException
+	 *             if {@code reference} is null
+	 */
+	public static <T> T checkNotNull(T reference, Object errorMessage) {
+		if (reference == null) {
+			throw new NullPointerException(String.valueOf(errorMessage));
+		}
+		return reference;
+	}
+
+	/**
+	 * Determines whether two possibly-null objects are equal. Returns:
+	 *
+	 * <ul>
+	 * <li>{@code true} if {@code a} and {@code b} are both null.
+	 * <li>{@code true} if {@code a} and {@code b} are both non-null and they
+	 * are equal according to {@link Object#equals(Object)}.
+	 * <li>{@code false} in all other situations.
+	 * </ul>
+	 *
+	 * <p>
+	 * This assumes that any non-null objects passed to this function conform to
+	 * the {@code equals()} contract.
+	 */
+	public static boolean equal(Object a, Object b) {
+		return a == b || (a != null && a.equals(b));
+	}
+
+	private JsonTokenUtil() {
+	}
 }
