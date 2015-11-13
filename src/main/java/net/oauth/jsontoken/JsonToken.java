@@ -45,12 +45,14 @@ public class JsonToken {
   public final static String ISSUED_AT = "iat";
   public final static String EXPIRATION = "exp";
   public final static String AUDIENCE = "aud";
+  public final static String SUBJECT = "sub";
+  public final static String NOT_BEFORE = "nbf";
+  public final static String UNIQUE_ID = "jti";
   
   // default encoding for all Json token
   public final static String BASE64URL_ENCODING = "base64url";
   
   public final static int DEFAULT_LIFETIME_IN_MINS = 2;
-
 
   private JsonObject header;
   private SignatureAlgorithm sigAlg;
@@ -63,7 +65,6 @@ public class JsonToken {
   private final Signer signer;
   private String signature;
   private String baseString;
-  
   
   /**
    * Public constructor, use empty data type.
@@ -90,6 +91,7 @@ public class JsonToken {
     this.signature = null;
     this.baseString = null;
     this.tokenString = null;
+	createHeader();
     String issuer = signer.getIssuer();
     if (issuer != null) {
       setParam(JsonToken.ISSUER, issuer);
@@ -214,6 +216,19 @@ public class JsonToken {
     setParam(AUDIENCE, audience);
   }
 
+  public String getSubject() {
+	String subject = getParamAsString(SUBJECT);
+	if (subject == null) {
+	  return null;
+	}
+	// JWT represents time in seconds
+	return subject;
+  }
+
+  public void setSubject(String subject) {
+	setParam(JsonToken.SUBJECT, subject);
+  }
+	
   public void setParam(String name, String value) {
     payload.addProperty(name, value);
   }
@@ -294,6 +309,7 @@ public class JsonToken {
 
   private JsonObject createHeader() {
     header = new JsonObject();
+	header.addProperty(TYPE_HEADER, "JWT");
     header.addProperty(ALGORITHM_HEADER, getSignatureAlgorithm().getNameForJson());
     String keyId = getKeyId();
     if (keyId != null) {
