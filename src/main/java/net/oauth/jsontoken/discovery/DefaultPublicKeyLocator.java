@@ -16,12 +16,11 @@
  */
 package net.oauth.jsontoken.discovery;
 
-import com.google.common.collect.Lists;
-
 import net.oauth.jsontoken.crypto.RsaSHA256Verifier;
 import net.oauth.jsontoken.crypto.Verifier;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -62,6 +61,8 @@ public class DefaultPublicKeyLocator implements VerifierProvider {
     URI serverDescriptor = descriptorProvider.getServerDescriptor(issuer);
     Verifier rsaVerifier = 
       new RsaSHA256Verifier(descriptorResolver.resolve(serverDescriptor).getVerificationKey(keyId));
-    return Lists.newArrayList(rsaVerifier);
+    List<Verifier> list = new ArrayList<Verifier>();
+    list.add(rsaVerifier);
+    return list;
   }
 }
