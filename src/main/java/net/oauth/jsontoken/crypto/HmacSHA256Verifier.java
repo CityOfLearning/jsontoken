@@ -18,7 +18,6 @@ package net.oauth.jsontoken.crypto;
 
 import java.security.InvalidKeyException;
 import java.security.SignatureException;
-import java.util.Arrays;
 
 /**
  * A {@link Verifier} that uses HMAC-SHA256 to verify symmetric-key signatures on byte arrays.

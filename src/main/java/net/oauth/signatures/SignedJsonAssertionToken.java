@@ -53,11 +53,13 @@ public class SignedJsonAssertionToken extends JsonToken {
 		super(token.getPayloadAsJsonObject());
 	}
 
+	@Override
 	public String getSubject() {
 		JsonPrimitive subjectJson = getParamAsPrimitive(SUBJECT);
 		return subjectJson == null ? null : subjectJson.getAsString();
 	}
 
+	@Override
 	public void setSubject(String m) {
 		setParam(SUBJECT, m);
 	}

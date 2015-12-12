@@ -28,8 +28,6 @@ import org.apache.commons.codec.binary.Base64;
 
 import java.security.SignatureException;
 import java.time.Instant;
-import java.util.LinkedHashMap;
-import java.util.Map;
 
 /**
  * A JSON Token.

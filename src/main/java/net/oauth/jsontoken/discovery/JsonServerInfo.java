@@ -23,7 +23,6 @@ import com.google.gson.annotations.SerializedName;
 import net.oauth.jsontoken.crypto.MagicRsaPublicKey;
 
 import java.security.PublicKey;
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**

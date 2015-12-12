@@ -16,10 +16,9 @@
  */
 package net.oauth.jsontoken;
 
-import com.google.gson.JsonObject;
-
 import java.security.SignatureException;
 
+import com.google.gson.JsonObject;
 /**
  * Token verifiers must implement this interface.
  */
