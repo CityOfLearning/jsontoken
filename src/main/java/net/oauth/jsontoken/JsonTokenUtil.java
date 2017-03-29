@@ -16,11 +16,11 @@
  */
 package net.oauth.jsontoken;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.StringUtils;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 /**
  * Some utility functions for {@link JsonToken}s.
@@ -28,45 +28,6 @@ import org.apache.commons.codec.binary.StringUtils;
 public class JsonTokenUtil {
 
 	static public final String DELIMITER = ".";
-
-	public static String toBase64(JsonObject json) {
-		return convertToBase64(toJson(json));
-	}
-
-	public static String toJson(JsonObject json) {
-		return new Gson().toJson(json);
-	}
-
-	public static String convertToBase64(String source) {
-		return Base64.encodeBase64URLSafeString(StringUtils.getBytesUtf8(source));
-	}
-
-	public static String decodeFromBase64String(String encoded) {
-		return new String(Base64.decodeBase64(encoded));
-	}
-
-	public static String fromBase64ToJsonString(String source) {
-		return StringUtils.newStringUtf8(Base64.decodeBase64(source));
-	}
-
-	/*
-	 * public static String toDotFormat(String... parts) { return
-	 * Joiner.on('.').useForNull("").join(parts); }
-	 */
-
-	public static String toDotFormat(String... parts) {
-		StringBuilder sb = new StringBuilder();
-		String prefix = "";
-		for (String n : parts) {
-			sb.append(prefix);
-			prefix = ".";
-			if (n == null) {
-				n = "";
-			}
-			sb.append(n);
-		}
-		return sb.toString();
-	}
 
 	/**
 	 * Ensures that an object reference passed as a parameter to the calling
@@ -105,6 +66,14 @@ public class JsonTokenUtil {
 		return reference;
 	}
 
+	public static String convertToBase64(String source) {
+		return Base64.encodeBase64URLSafeString(StringUtils.getBytesUtf8(source));
+	}
+
+	public static String decodeFromBase64String(String encoded) {
+		return new String(Base64.decodeBase64(encoded));
+	}
+
 	/**
 	 * Determines whether two possibly-null objects are equal. Returns:
 	 *
@@ -120,7 +89,38 @@ public class JsonTokenUtil {
 	 * the {@code equals()} contract.
 	 */
 	public static boolean equal(Object a, Object b) {
-		return a == b || (a != null && a.equals(b));
+		return (a == b) || ((a != null) && a.equals(b));
+	}
+
+	/*
+	 * public static String toDotFormat(String... parts) { return
+	 * Joiner.on('.').useForNull("").join(parts); }
+	 */
+
+	public static String fromBase64ToJsonString(String source) {
+		return StringUtils.newStringUtf8(Base64.decodeBase64(source));
+	}
+
+	public static String toBase64(JsonObject json) {
+		return convertToBase64(toJson(json));
+	}
+
+	public static String toDotFormat(String... parts) {
+		StringBuilder sb = new StringBuilder();
+		String prefix = "";
+		for (String n : parts) {
+			sb.append(prefix);
+			prefix = ".";
+			if (n == null) {
+				n = "";
+			}
+			sb.append(n);
+		}
+		return sb.toString();
+	}
+
+	public static String toJson(JsonObject json) {
+		return new Gson().toJson(json);
 	}
 
 	private JsonTokenUtil() {

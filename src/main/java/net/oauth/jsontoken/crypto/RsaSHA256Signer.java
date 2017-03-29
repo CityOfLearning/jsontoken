@@ -28,50 +28,59 @@ import java.security.interfaces.RSAPrivateKey;
  */
 public class RsaSHA256Signer extends AbstractSigner {
 
-  private final Signature signature;
-  private final PrivateKey signingKey;
+	private final Signature signature;
+	private final PrivateKey signingKey;
 
-  /**
-   * Public constructor.
-   * @param issuer The id of this signer, to be included in the JSON Token's envelope.
-   * @param keyId The id of the key used by this signer, to be included in the JSON Token's envelope.
-   * @param key the private key to be used for signing.
-   * @throws InvalidKeyException if the key is unsuitable for RSA signing.
-   */
-  public RsaSHA256Signer(String issuer, String keyId, RSAPrivateKey key) throws InvalidKeyException {
-    super(issuer, keyId);
+	/**
+	 * Public constructor.
+	 *
+	 * @param issuer
+	 *            The id of this signer, to be included in the JSON Token's
+	 *            envelope.
+	 * @param keyId
+	 *            The id of the key used by this signer, to be included in the
+	 *            JSON Token's envelope.
+	 * @param key
+	 *            the private key to be used for signing.
+	 * @throws InvalidKeyException
+	 *             if the key is unsuitable for RSA signing.
+	 */
+	public RsaSHA256Signer(String issuer, String keyId, RSAPrivateKey key) throws InvalidKeyException {
+		super(issuer, keyId);
 
-    this.signingKey = key;
+		signingKey = key;
 
-    try {
-      this.signature = Signature.getInstance("SHA256withRSA");
-      this.signature.initSign(signingKey);
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException("platform is missing RSAwithSHA256 signature alg, or key is invalid", e);
-    }
-  }
+		try {
+			signature = Signature.getInstance("SHA256withRSA");
+			signature.initSign(signingKey);
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("platform is missing RSAwithSHA256 signature alg, or key is invalid", e);
+		}
+	}
 
-  /*
-   * (non-Javadoc)
-   * @see net.oauth.jsontoken.crypto.Signer#getSignatureAlgorithm()
-   */
-  @Override
-  public SignatureAlgorithm getSignatureAlgorithm() {
-    return SignatureAlgorithm.RS256;
-  }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see net.oauth.jsontoken.crypto.Signer#getSignatureAlgorithm()
+	 */
+	@Override
+	public SignatureAlgorithm getSignatureAlgorithm() {
+		return SignatureAlgorithm.RS256;
+	}
 
-  /*
-   * (non-Javadoc)
-   * @see net.oauth.jsontoken.crypto.Signer#sign(byte[])
-   */
-  @Override
-  public byte[] sign(byte[] source) throws SignatureException {
-    try {
-      signature.initSign(signingKey);
-    } catch (InvalidKeyException e) {
-      throw new RuntimeException("key somehow became invalid since calling the constructor");
-    }
-    signature.update(source);
-    return signature.sign();
-  }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see net.oauth.jsontoken.crypto.Signer#sign(byte[])
+	 */
+	@Override
+	public byte[] sign(byte[] source) throws SignatureException {
+		try {
+			signature.initSign(signingKey);
+		} catch (InvalidKeyException e) {
+			throw new RuntimeException("key somehow became invalid since calling the constructor");
+		}
+		signature.update(source);
+		return signature.sign();
+	}
 }

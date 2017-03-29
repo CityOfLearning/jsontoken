@@ -25,17 +25,19 @@ import java.net.URI;
  * {@link ServerDescriptorProvider} with the {@link DefaultPublicKeyLocator}.
  *
  * For example, some OAuth Servers might use their Client's server descriptors
- * as client_ids, and then use this implementation of {@link ServerDescriptorProvider}
- * with the {@link DefaultPublicKeyLocator}.
+ * as client_ids, and then use this implementation of
+ * {@link ServerDescriptorProvider} with the {@link DefaultPublicKeyLocator}.
  */
 public class IdentityServerDescriptorProvider implements ServerDescriptorProvider {
 
-  /*
-   * (non-Javadoc)
-   * @see net.oauth.jsontoken.discovery.ServerDescriptorProvider#getServerDescriptor(java.lang.String)
-   */
-  @Override
-  public URI getServerDescriptor(String issuer) {
-    return URI.create(issuer);
-  }
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see net.oauth.jsontoken.discovery.ServerDescriptorProvider#
+	 * getServerDescriptor(java.lang.String)
+	 */
+	@Override
+	public URI getServerDescriptor(String issuer) {
+		return URI.create(issuer);
+	}
 }

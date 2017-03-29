@@ -22,93 +22,93 @@ import java.security.SignatureException;
 
 import org.apache.commons.codec.binary.Base64;
 
+import com.google.common.base.Preconditions;
+
 import net.oauth.jsontoken.Clock;
 import net.oauth.jsontoken.JsonToken;
 import net.oauth.jsontoken.crypto.Signer;
-
-import com.google.common.base.Preconditions;
 
 /**
  * A signed OAuth token.
  */
 public class SignedOAuthToken extends JsonToken {
 
-  public static final String AUTH_METHOD = "Token";
-  public static final String SIGNED_TOKEN_PARAM = "signed_token";
+	public static final String AUTH_METHOD = "Token";
+	public static final String SIGNED_TOKEN_PARAM = "signed_token";
 
-  // addition JSON token payload fields for signed OAuth tokens
-  public static final String METHOD = "method";
-  public static final String BODY_HASH = "body_hash";
-  public static final String OAUTH_TOKEN = "token";
-  public static final String NONCE = "nonce";
-  
-  public SignedOAuthToken(Signer signer, Clock clock) {
-    super(signer, clock);
-  }
+	// addition JSON token payload fields for signed OAuth tokens
+	public static final String METHOD = "method";
+	public static final String BODY_HASH = "body_hash";
+	public static final String OAUTH_TOKEN = "token";
+	public static final String NONCE = "nonce";
 
-  public SignedOAuthToken(Signer signer) {
-    super(signer);
-  }
-  
-  public SignedOAuthToken(JsonToken token) {
-    super(token.getPayloadAsJsonObject());
-  }
+	public SignedOAuthToken(JsonToken token) {
+		super(token.getPayloadAsJsonObject());
+	}
 
-  public String getMethod() {
-    return getParamAsPrimitive(METHOD).getAsString();
-  }
+	public SignedOAuthToken(Signer signer) {
+		super(signer);
+	}
 
-  public void setMethod(String m) {
-    setParam(METHOD, m);
-  }
+	public SignedOAuthToken(Signer signer, Clock clock) {
+		super(signer, clock);
+	}
 
-  public String getBodyHash() {
-    return getParamAsPrimitive(BODY_HASH).getAsString();
-  }
+	public String getAuthorizationHeader() throws SignatureException {
+		return AUTH_METHOD + " " + SIGNED_TOKEN_PARAM + "=" + serializeAndSign();
+	}
 
-  public void setRequestBody(byte[] body) {
-    setParam(BODY_HASH, getBodyHash(body));
-  }
+	public String getBodyHash() {
+		return getParamAsPrimitive(BODY_HASH).getAsString();
+	}
 
-  public String getOAuthToken() {
-    return getParamAsPrimitive(OAUTH_TOKEN).getAsString();
-  }
+	private String getBodyHash(byte[] requestBody) {
+		Preconditions.checkNotNull(requestBody);
+		String hashAlg = getSignatureAlgorithm().getHashAlgorithm();
+		MessageDigest digest;
+		try {
+			digest = MessageDigest.getInstance(hashAlg);
+		} catch (NoSuchAlgorithmException e) {
+			throw new IllegalStateException("platform is missing hash algorithm: " + hashAlg);
+		}
+		byte[] hash = digest.digest(requestBody);
+		return Base64.encodeBase64URLSafeString(hash);
+	}
 
-  public void setOAuthToken(String t) {
-    setParam(OAUTH_TOKEN, t);
-  }
+	public String getMethod() {
+		return getParamAsPrimitive(METHOD).getAsString();
+	}
 
-  public String getNonce() {
-    return getParamAsPrimitive(NONCE).getAsString();
-  }
+	public String getNonce() {
+		return getParamAsPrimitive(NONCE).getAsString();
+	}
 
-  public void setNonce(String n) {
-    setParam(NONCE, n);
-  }
+	public String getOAuthToken() {
+		return getParamAsPrimitive(OAUTH_TOKEN).getAsString();
+	}
 
-  public String getAuthorizationHeader() throws SignatureException {
-    return AUTH_METHOD + " " + SIGNED_TOKEN_PARAM + "=" + serializeAndSign();
-  }
+	@Override
+	public String serializeAndSign() throws SignatureException {
+		Preconditions.checkNotNull(getOAuthToken(), "must set OAuth token");
+		Preconditions.checkNotNull(getNonce(), "must set nonce");
+		Preconditions.checkNotNull(getAudience(), "must set Audience");
+		Preconditions.checkNotNull(getMethod(), "must set method");
+		return super.serializeAndSign();
+	}
 
-  @Override
-  public String serializeAndSign() throws SignatureException {
-    Preconditions.checkNotNull(getOAuthToken(), "must set OAuth token");
-    Preconditions.checkNotNull(getNonce(), "must set nonce");
-    Preconditions.checkNotNull(getAudience(), "must set Audience");
-    Preconditions.checkNotNull(getMethod(), "must set method");
-    return super.serializeAndSign();
-  }
+	public void setMethod(String m) {
+		setParam(METHOD, m);
+	}
 
-  private String getBodyHash(byte[] requestBody) {
-    Preconditions.checkNotNull(requestBody);
-    String hashAlg = getSignatureAlgorithm().getHashAlgorithm();
-    MessageDigest digest;
-    try {
-      digest = MessageDigest.getInstance(hashAlg);
-    } catch (NoSuchAlgorithmException e) {
-      throw new IllegalStateException("platform is missing hash algorithm: " + hashAlg);
-    }
-    byte[] hash = digest.digest(requestBody);
-    return Base64.encodeBase64URLSafeString(hash);
-  }
+	public void setNonce(String n) {
+		setParam(NONCE, n);
+	}
+
+	public void setOAuthToken(String t) {
+		setParam(OAUTH_TOKEN, t);
+	}
+
+	public void setRequestBody(byte[] body) {
+		setParam(BODY_HASH, getBodyHash(body));
+	}
 }

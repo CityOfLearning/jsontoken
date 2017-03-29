@@ -16,19 +16,19 @@
  */
 package net.oauth.signatures;
 
-import net.oauth.jsontoken.JsonToken;
-
 import java.security.SignatureException;
+
+import net.oauth.jsontoken.JsonToken;
 
 /**
  * Receivers of Json Tokens may implement this interface.
  */
 public interface NonceChecker {
 
-  /**
-   * Throws if the nonce in the {@link JsonToken} has previously been
-   * used by the same token issuer.
-   */
-  public void checkNonce(String nonce) throws SignatureException;
+	/**
+	 * Throws if the nonce in the {@link JsonToken} has previously been used by
+	 * the same token issuer.
+	 */
+	public void checkNonce(String nonce) throws SignatureException;
 
 }

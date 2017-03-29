@@ -16,8 +16,6 @@
  */
 package net.oauth.jsontoken.crypto;
 
-import org.apache.commons.codec.binary.Base64;
-
 import java.math.BigInteger;
 import java.security.KeyFactory;
 import java.security.NoSuchAlgorithmException;
@@ -26,59 +24,63 @@ import java.security.spec.InvalidKeySpecException;
 import java.security.spec.RSAPublicKeySpec;
 import java.util.regex.Pattern;
 
+import org.apache.commons.codec.binary.Base64;
+
 /**
- * Class that can parse "magic key" RSA public key representations, which are of the form
- * RSA.<base64(big-endian(modulus))>.<base64(big-endian(exponent))>.
+ * Class that can parse "magic key" RSA public key representations, which are of
+ * the form RSA.<base64(big-endian(modulus))>.<base64(big-endian(exponent))>.
  */
 public class MagicRsaPublicKey {
 
-  private final PublicKey publicKey;
+	private static PublicKey parseKey(String magicKey) {
+		String[] pieces = magicKey.split(Pattern.quote("."));
+		if (pieces.length != 3) {
+			throw new IllegalStateException("not a valid magic key: " + magicKey);
+		}
 
-  /**
-   * Public constructor.
-   * @param magicKey the serialized key (of the form RSA.modulus.exponent).
-   */
-  public MagicRsaPublicKey(String magicKey) {
-    this.publicKey = parseKey(magicKey);
-  }
+		if (!pieces[0].equals("RSA")) {
+			throw new IllegalStateException("unkown key type for magic key: " + pieces[0]);
+		}
 
-  /**
-   * Returns the public key represented by the "magic" serialized key.
-   */
-  public PublicKey getKey() {
-    return publicKey;
-  }
+		String modulusString = pieces[1];
+		String exponentString = pieces[2];
 
-  private static PublicKey parseKey(String magicKey) {
-    String[] pieces = magicKey.split(Pattern.quote("."));
-    if (pieces.length != 3) {
-      throw new IllegalStateException("not a valid magic key: " + magicKey);
-    }
+		byte[] modulusBytes = Base64.decodeBase64(modulusString);
+		byte[] exponentBytes = Base64.decodeBase64(exponentString);
 
-    if (!pieces[0].equals("RSA")) {
-      throw new IllegalStateException("unkown key type for magic key: " + pieces[0]);
-    }
+		BigInteger modulus = new BigInteger(modulusBytes);
+		BigInteger exponent = new BigInteger(exponentBytes);
 
-    String modulusString = pieces[1];
-    String exponentString = pieces[2];
+		RSAPublicKeySpec spec = new RSAPublicKeySpec(modulus, exponent);
+		KeyFactory fac;
+		try {
+			fac = KeyFactory.getInstance("RSA");
+		} catch (NoSuchAlgorithmException e) {
+			throw new RuntimeException("RSA key factory missing on platform", e);
+		}
+		try {
+			return fac.generatePublic(spec);
+		} catch (InvalidKeySpecException e) {
+			throw new IllegalStateException("bad key in descripor doc: " + magicKey, e);
+		}
+	}
 
-    byte[] modulusBytes = Base64.decodeBase64(modulusString);
-    byte[] exponentBytes = Base64.decodeBase64(exponentString);
+	private final PublicKey publicKey;
 
-    BigInteger modulus = new BigInteger(modulusBytes);
-    BigInteger exponent = new BigInteger(exponentBytes);
+	/**
+	 * Public constructor.
+	 *
+	 * @param magicKey
+	 *            the serialized key (of the form RSA.modulus.exponent).
+	 */
+	public MagicRsaPublicKey(String magicKey) {
+		publicKey = parseKey(magicKey);
+	}
 
-    RSAPublicKeySpec spec = new RSAPublicKeySpec(modulus, exponent);
-    KeyFactory fac;
-    try {
-      fac = KeyFactory.getInstance("RSA");
-    } catch (NoSuchAlgorithmException e) {
-      throw new RuntimeException("RSA key factory missing on platform", e);
-    }
-    try {
-      return fac.generatePublic(spec);
-    } catch (InvalidKeySpecException e) {
-      throw new IllegalStateException("bad key in descripor doc: " + magicKey, e);
-    }
-  }
+	/**
+	 * Returns the public key represented by the "magic" serialized key.
+	 */
+	public PublicKey getKey() {
+		return publicKey;
+	}
 }

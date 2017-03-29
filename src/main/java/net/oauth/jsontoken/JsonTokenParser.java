@@ -16,6 +16,13 @@
  */
 package net.oauth.jsontoken;
 
+import java.security.SignatureException;
+import java.time.Instant;
+import java.util.List;
+import java.util.regex.Pattern;
+
+import org.apache.commons.codec.binary.Base64;
+
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
@@ -25,12 +32,6 @@ import net.oauth.jsontoken.crypto.AsciiStringVerifier;
 import net.oauth.jsontoken.crypto.SignatureAlgorithm;
 import net.oauth.jsontoken.crypto.Verifier;
 import net.oauth.jsontoken.discovery.VerifierProviders;
-import org.apache.commons.codec.binary.Base64;
-import java.time.Instant;
-
-import java.security.SignatureException;
-import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * Class that parses and verifies JSON Tokens.
@@ -39,22 +40,6 @@ public class JsonTokenParser {
 	private final Clock clock;
 	private final VerifierProviders verifierProviders;
 	private final Checker[] checkers;
-
-	/**
-	 * Creates a new {@link JsonTokenParser} with a default system clock. The
-	 * default system clock tolerates a clock skew of up to
-	 * {@link SystemClock#DEFAULT_ACCEPTABLE_CLOCK_SKEW_IN_MIN}.
-	 *
-	 * @param verifierProviders
-	 *            an object that provides signature verifiers based on a
-	 *            signature algorithm, the signer, and key ids.
-	 * @param checker
-	 *            an audience checker that validates the audience in the JSON
-	 *            token.
-	 */
-	public JsonTokenParser(VerifierProviders verifierProviders, Checker checker) {
-		this(new SystemClock(), verifierProviders, checker);
-	}
 
 	/**
 	 * Creates a new {@link JsonTokenParser}.
@@ -76,6 +61,22 @@ public class JsonTokenParser {
 	}
 
 	/**
+	 * Creates a new {@link JsonTokenParser} with a default system clock. The
+	 * default system clock tolerates a clock skew of up to
+	 * {@link SystemClock#DEFAULT_ACCEPTABLE_CLOCK_SKEW_IN_MIN}.
+	 *
+	 * @param verifierProviders
+	 *            an object that provides signature verifiers based on a
+	 *            signature algorithm, the signer, and key ids.
+	 * @param checker
+	 *            an audience checker that validates the audience in the JSON
+	 *            token.
+	 */
+	public JsonTokenParser(VerifierProviders verifierProviders, Checker checker) {
+		this(new SystemClock(), verifierProviders, checker);
+	}
+
+	/**
 	 * Decodes the JWT token string into a JsonToken object. Does not perform
 	 * any validation of headers or claims.
 	 *
@@ -87,110 +88,12 @@ public class JsonTokenParser {
 		String[] pieces = splitTokenString(tokenString);
 		String jwtHeaderSegment = pieces[0];
 		String jwtPayloadSegment = pieces[1];
-		byte[] signature = Base64.decodeBase64(pieces[2]);
+		Base64.decodeBase64(pieces[2]);
 		JsonParser parser = new JsonParser();
 		JsonObject header = parser.parse(JsonTokenUtil.fromBase64ToJsonString(jwtHeaderSegment)).getAsJsonObject();
 		JsonObject payload = parser.parse(JsonTokenUtil.fromBase64ToJsonString(jwtPayloadSegment)).getAsJsonObject();
 		JsonToken jsonToken = new JsonToken(header, payload, clock, tokenString);
 		return jsonToken;
-	}
-
-	/**
-	 * Verifies that the jsonToken has a valid signature and valid standard
-	 * claims (iat, exp). Uses VerifierProviders to obtain the secret key.
-	 *
-	 * @param jsonToken
-	 * @throws java.security.SignatureException
-	 */
-	public void verify(JsonToken jsonToken) throws SignatureException {
-		List<Verifier> verifiers = provideVerifiers(jsonToken);
-		verify(jsonToken, verifiers);
-	}
-
-	/**
-	 * Parses, and verifies, a JSON Token.
-	 *
-	 * @param tokenString
-	 *            the serialized token that is to parsed and verified.
-	 * @return the deserialized {@link JsonToken}, suitable for passing to the
-	 *         constructor of {@link JsonToken} or equivalent constructor of
-	 *         {@link JsonToken} subclasses.
-	 * @throws SignatureException
-	 */
-	public JsonToken verifyAndDeserialize(String tokenString) throws Exception {
-		JsonToken jsonToken = deserialize(tokenString);
-		verify(jsonToken);
-		return jsonToken;
-	}
-
-	/**
-	 * Verifies that the jsonToken has a valid signature and valid standard
-	 * claims (iat, exp). Does not need VerifierProviders because verifiers are
-	 * passed in directly.
-	 *
-	 * @param jsonToken
-	 *            the token to verify
-	 * @throws SignatureException
-	 *             when the signature is invalid
-	 * @throws IllegalStateException
-	 *             when exp or iat are invalid
-	 */
-	public void verify(JsonToken jsonToken, List<Verifier> verifiers) throws SignatureException {
-		if (!signatureIsValid(jsonToken.getTokenString(), verifiers)) {
-			throw new SignatureException("Invalid signature for token: " + jsonToken.getTokenString());
-		}
-
-		Instant issuedAt = jsonToken.getIssuedAt();
-		Instant expiration = jsonToken.getExpiration();
-
-		if (issuedAt == null && expiration != null) {
-			issuedAt = Instant.ofEpochMilli(0);
-		}
-
-		if (issuedAt != null && expiration == null) {
-			expiration = Instant.ofEpochMilli(Long.MAX_VALUE);
-		}
-
-		if (issuedAt != null && expiration != null) {
-			if (issuedAt.isAfter(expiration) || !clock.isCurrentTimeInInterval(issuedAt, expiration)) {
-				throw new IllegalStateException(String.format("Invalid iat and/or exp. iat: %s exp: %s " + "now: %s",
-						jsonToken.getIssuedAt(), jsonToken.getExpiration(), clock.now()));
-			}
-		}
-
-		if (checkers != null) {
-			for (Checker checker : checkers) {
-				checker.check(jsonToken.getPayloadAsJsonObject());
-			}
-		}
-	}
-
-	/**
-	 * Verifies that a JSON Web Token's signature is valid.
-	 *
-	 * @param tokenString
-	 *            the encoded and signed JSON Web Token to verify.
-	 * @param verifiers
-	 *            used to verify the signature. These usually encapsulate secret
-	 *            keys.
-	 */
-	public boolean signatureIsValid(String tokenString, List<Verifier> verifiers) {
-		String[] pieces = splitTokenString(tokenString);
-		byte[] signature = Base64.decodeBase64(pieces[2]);
-		String baseString = JsonTokenUtil.toDotFormat(pieces[0], pieces[1]);
-
-		boolean sigVerified = false;
-		for (Verifier verifier : verifiers) {
-			AsciiStringVerifier asciiVerifier = new AsciiStringVerifier(verifier);
-			try {
-				asciiVerifier.verifySignature(baseString, signature);
-				sigVerified = true;
-				break;
-			} catch (SignatureException e) {
-				continue;
-			}
-		}
-		return sigVerified;
 	}
 
 	/**
@@ -249,6 +152,34 @@ public class JsonTokenParser {
 	}
 
 	/**
+	 * Verifies that a JSON Web Token's signature is valid.
+	 *
+	 * @param tokenString
+	 *            the encoded and signed JSON Web Token to verify.
+	 * @param verifiers
+	 *            used to verify the signature. These usually encapsulate secret
+	 *            keys.
+	 */
+	public boolean signatureIsValid(String tokenString, List<Verifier> verifiers) {
+		String[] pieces = splitTokenString(tokenString);
+		byte[] signature = Base64.decodeBase64(pieces[2]);
+		String baseString = JsonTokenUtil.toDotFormat(pieces[0], pieces[1]);
+
+		boolean sigVerified = false;
+		for (Verifier verifier : verifiers) {
+			AsciiStringVerifier asciiVerifier = new AsciiStringVerifier(verifier);
+			try {
+				asciiVerifier.verifySignature(baseString, signature);
+				sigVerified = true;
+				break;
+			} catch (SignatureException e) {
+				continue;
+			}
+		}
+		return sigVerified;
+	}
+
+	/**
 	 * @param tokenString
 	 *            The original encoded representation of a JWT
 	 * @return Three components of the JWT as an array of strings
@@ -260,6 +191,76 @@ public class JsonTokenParser {
 					+ "', but it has " + pieces.length + " segments");
 		}
 		return pieces;
+	}
+
+	/**
+	 * Verifies that the jsonToken has a valid signature and valid standard
+	 * claims (iat, exp). Uses VerifierProviders to obtain the secret key.
+	 *
+	 * @param jsonToken
+	 * @throws java.security.SignatureException
+	 */
+	public void verify(JsonToken jsonToken) throws SignatureException {
+		List<Verifier> verifiers = provideVerifiers(jsonToken);
+		verify(jsonToken, verifiers);
+	}
+
+	/**
+	 * Verifies that the jsonToken has a valid signature and valid standard
+	 * claims (iat, exp). Does not need VerifierProviders because verifiers are
+	 * passed in directly.
+	 *
+	 * @param jsonToken
+	 *            the token to verify
+	 * @throws SignatureException
+	 *             when the signature is invalid
+	 * @throws IllegalStateException
+	 *             when exp or iat are invalid
+	 */
+	public void verify(JsonToken jsonToken, List<Verifier> verifiers) throws SignatureException {
+		if (!signatureIsValid(jsonToken.getTokenString(), verifiers)) {
+			throw new SignatureException("Invalid signature for token: " + jsonToken.getTokenString());
+		}
+
+		Instant issuedAt = jsonToken.getIssuedAt();
+		Instant expiration = jsonToken.getExpiration();
+
+		if ((issuedAt == null) && (expiration != null)) {
+			issuedAt = Instant.ofEpochMilli(0);
+		}
+
+		if ((issuedAt != null) && (expiration == null)) {
+			expiration = Instant.ofEpochMilli(Long.MAX_VALUE);
+		}
+
+		if ((issuedAt != null) && (expiration != null)) {
+			if (issuedAt.isAfter(expiration) || !clock.isCurrentTimeInInterval(issuedAt, expiration)) {
+				throw new IllegalStateException(String.format("Invalid iat and/or exp. iat: %s exp: %s " + "now: %s",
+						jsonToken.getIssuedAt(), jsonToken.getExpiration(), clock.now()));
+			}
+		}
+
+		if (checkers != null) {
+			for (Checker checker : checkers) {
+				checker.check(jsonToken.getPayloadAsJsonObject());
+			}
+		}
+	}
+
+	/**
+	 * Parses, and verifies, a JSON Token.
+	 *
+	 * @param tokenString
+	 *            the serialized token that is to parsed and verified.
+	 * @return the deserialized {@link JsonToken}, suitable for passing to the
+	 *         constructor of {@link JsonToken} or equivalent constructor of
+	 *         {@link JsonToken} subclasses.
+	 * @throws SignatureException
+	 */
+	public JsonToken verifyAndDeserialize(String tokenString) throws Exception {
+		JsonToken jsonToken = deserialize(tokenString);
+		verify(jsonToken);
+		return jsonToken;
 	}
 
 }

@@ -41,45 +41,27 @@ public class SignedJsonAssertionToken extends JsonToken {
 	public static final String SCOPE = "scope";
 	public static final String NONCE = "nonce";
 
-	public SignedJsonAssertionToken(Signer signer, Clock clock) {
-		super(signer, clock);
+	public SignedJsonAssertionToken(JsonToken token) {
+		super(token.getPayloadAsJsonObject());
 	}
 
 	public SignedJsonAssertionToken(Signer signer) {
 		super(signer);
 	}
 
-	public SignedJsonAssertionToken(JsonToken token) {
-		super(token.getPayloadAsJsonObject());
+	public SignedJsonAssertionToken(Signer signer, Clock clock) {
+		super(signer, clock);
 	}
 
 	@Override
-	public String getSubject() {
-		JsonPrimitive subjectJson = getParamAsPrimitive(SUBJECT);
-		return subjectJson == null ? null : subjectJson.getAsString();
-	}
-
-	@Override
-	public void setSubject(String m) {
-		setParam(SUBJECT, m);
-	}
-
-	public String getScope() {
-		JsonPrimitive scopeJson = getParamAsPrimitive(SCOPE);
-		return scopeJson == null ? null : scopeJson.getAsString();
-	}
-
-	public void setScope(String scope) {
-		setParam(SCOPE, scope);
-	}
-
-	public String getNonce() {
-		JsonPrimitive nonceJson = getParamAsPrimitive(NONCE);
-		return nonceJson == null ? null : nonceJson.getAsString();
-	}
-
-	public void setNonce(String n) {
-		setParam(NONCE, n);
+	protected String computeSignatureBaseString() {
+		if (getIssuedAt() == null) {
+			setIssuedAt(clock.now());
+		}
+		if (getExpiration() == null) {
+			setExpiration(getIssuedAt().plusSeconds(DEFAULT_LIFETIME_IN_MINS * 60));
+		}
+		return super.computeSignatureBaseString();
 	}
 
 	public String getJsonAssertionPostBody() throws SignatureException {
@@ -94,19 +76,37 @@ public class SignedJsonAssertionToken extends JsonToken {
 		}
 	}
 
+	public String getNonce() {
+		JsonPrimitive nonceJson = getParamAsPrimitive(NONCE);
+		return nonceJson == null ? null : nonceJson.getAsString();
+	}
+
+	public String getScope() {
+		JsonPrimitive scopeJson = getParamAsPrimitive(SCOPE);
+		return scopeJson == null ? null : scopeJson.getAsString();
+	}
+
+	@Override
+	public String getSubject() {
+		JsonPrimitive subjectJson = getParamAsPrimitive(SUBJECT);
+		return subjectJson == null ? null : subjectJson.getAsString();
+	}
+
 	@Override
 	public String serializeAndSign() throws SignatureException {
 		return super.serializeAndSign();
 	}
 
+	public void setNonce(String n) {
+		setParam(NONCE, n);
+	}
+
+	public void setScope(String scope) {
+		setParam(SCOPE, scope);
+	}
+
 	@Override
-	protected String computeSignatureBaseString() {
-		if (getIssuedAt() == null) {
-			setIssuedAt(clock.now());
-		}
-		if (getExpiration() == null) {
-			setExpiration(getIssuedAt().plusSeconds(DEFAULT_LIFETIME_IN_MINS * 60));
-		}
-		return super.computeSignatureBaseString();
+	public void setSubject(String m) {
+		setParam(SUBJECT, m);
 	}
 }

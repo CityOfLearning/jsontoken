@@ -16,46 +16,51 @@
  */
 package net.oauth.jsontoken.discovery;
 
+import java.security.PublicKey;
+import java.util.Map;
+
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
 import net.oauth.jsontoken.crypto.MagicRsaPublicKey;
 
-import java.security.PublicKey;
-import java.util.Map;
-
 /**
- * Implementation of the {@link ServerInfo} interface that assumes the
- * server info document is in JSON format. It can parse such a JSON-formatted
- * server info document and exposes its contents through the requisite
- * methods of the {@link ServerInfo} interface.
+ * Implementation of the {@link ServerInfo} interface that assumes the server
+ * info document is in JSON format. It can parse such a JSON-formatted server
+ * info document and exposes its contents through the requisite methods of the
+ * {@link ServerInfo} interface.
  */
 public class JsonServerInfo implements ServerInfo {
 
-	  @SerializedName("verification_keys")
-	  private final Map<String, String> verificationKeys = Maps.newHashMap();
-
-	  /**
-	   * Parses a JSON-formatted server info document and returns it as a
-	   * {@link JsonServerInfo} object.
-	   * @param json the contents of the JSON-formatted server info document.
-	   */
-	  public static JsonServerInfo getDocument(String json) {
-	    return new Gson().fromJson(json, JsonServerInfo.class);
-	  }
-
-	  /*
-	   * (non-Javadoc)
-	   * @see net.oauth.jsontoken.discovery.ServerInfo#getVerificationKey(java.lang.String)
-	   */
-	  @Override
-	  public PublicKey getVerificationKey(String keyId) {
-	    String magicKey = verificationKeys.get(keyId);
-	    if (magicKey == null) {
-	      return null;
-	    } else {
-	      return new MagicRsaPublicKey(magicKey).getKey();
-	    }
-	  }
+	/**
+	 * Parses a JSON-formatted server info document and returns it as a
+	 * {@link JsonServerInfo} object.
+	 *
+	 * @param json
+	 *            the contents of the JSON-formatted server info document.
+	 */
+	public static JsonServerInfo getDocument(String json) {
+		return new Gson().fromJson(json, JsonServerInfo.class);
 	}
+
+	@SerializedName("verification_keys")
+	private final Map<String, String> verificationKeys = Maps.newHashMap();
+
+	/*
+	 * (non-Javadoc)
+	 *
+	 * @see
+	 * net.oauth.jsontoken.discovery.ServerInfo#getVerificationKey(java.lang.
+	 * String)
+	 */
+	@Override
+	public PublicKey getVerificationKey(String keyId) {
+		String magicKey = verificationKeys.get(keyId);
+		if (magicKey == null) {
+			return null;
+		} else {
+			return new MagicRsaPublicKey(magicKey).getKey();
+		}
+	}
+}

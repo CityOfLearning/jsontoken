@@ -19,60 +19,60 @@ package net.oauth.signatures;
 import java.net.URI;
 import java.security.SignatureException;
 
-import net.oauth.jsontoken.Checker;
-import net.oauth.jsontoken.JsonToken;
-
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.gson.JsonObject;
 
+import net.oauth.jsontoken.Checker;
+import net.oauth.jsontoken.JsonToken;
+
 /**
- * Audience checker for signed OAuth tokens. For such tokens, the audience in the token
- * is the URL of the accessed resource, and has to match it exactly (save some case-insensitivities
- * in the host name).
+ * Audience checker for signed OAuth tokens. For such tokens, the audience in
+ * the token is the URL of the accessed resource, and has to match it exactly
+ * (save some case-insensitivities in the host name).
  */
 public class SignedTokenAudienceChecker implements Checker {
 
-  // URI that the client is accessing, as seen by the server
-  private final String serverUri;
+	private static void checkUri(String ourUriString, String tokenUriString) throws SignatureException {
+		URI ourUri = URI.create(ourUriString);
+		URI tokenUri = URI.create(tokenUriString);
 
-  /**
-   * Public constructor.
-   * @param uri the URI against which the signed OAuth token was exercised.
-   */
-  public SignedTokenAudienceChecker(String uri) {
-    this.serverUri = uri;
-  }
+		if (!ourUri.getScheme().equalsIgnoreCase(tokenUri.getScheme())) {
+			throw new SignatureException("scheme in token URI (" + tokenUri.getScheme() + ") is wrong");
+		}
 
-  /**
-   * @see net.oauth.jsontoken.Checker#check(com.google.gson.JsonObject)
-   */
-  @Override
-  public void check(JsonObject payload) throws SignatureException {
-    checkUri(serverUri,
-        Preconditions.checkNotNull(
-            payload.get(JsonToken.AUDIENCE).getAsString(),
-            "Audience cannot be null!"));
-  }
+		if (!ourUri.getAuthority().equalsIgnoreCase(tokenUri.getAuthority())) {
+			throw new SignatureException("authority in token URI (" + tokenUri.getAuthority() + ") is wrong");
+		}
 
-  private static void checkUri(String ourUriString, String tokenUriString) throws SignatureException {
-    URI ourUri = URI.create(ourUriString);
-    URI tokenUri = URI.create(tokenUriString);
+		if (!Objects.equal(ourUri.getPath(), tokenUri.getPath())) {
+			throw new SignatureException("path in token URI (" + tokenUri.getAuthority() + ") is wrong");
+		}
 
-    if (!ourUri.getScheme().equalsIgnoreCase(tokenUri.getScheme())) {
-      throw new SignatureException("scheme in token URI (" + tokenUri.getScheme() + ") is wrong");
-    }
+		if (!Objects.equal(ourUri.getQuery(), tokenUri.getQuery())) {
+			throw new SignatureException("query string in URI (" + tokenUri.getQuery() + ") is wrong");
+		}
+	}
 
-    if (!ourUri.getAuthority().equalsIgnoreCase(tokenUri.getAuthority())) {
-      throw new SignatureException("authority in token URI (" + tokenUri.getAuthority() + ") is wrong");
-    }
+	// URI that the client is accessing, as seen by the server
+	private final String serverUri;
 
-    if (!Objects.equal(ourUri.getPath(), tokenUri.getPath())) {
-      throw new SignatureException("path in token URI (" + tokenUri.getAuthority() + ") is wrong");
-    }
+	/**
+	 * Public constructor.
+	 *
+	 * @param uri
+	 *            the URI against which the signed OAuth token was exercised.
+	 */
+	public SignedTokenAudienceChecker(String uri) {
+		serverUri = uri;
+	}
 
-    if (!Objects.equal(ourUri.getQuery(), tokenUri.getQuery())) {
-      throw new SignatureException("query string in URI (" + tokenUri.getQuery() + ") is wrong");
-    }
-  }
+	/**
+	 * @see net.oauth.jsontoken.Checker#check(com.google.gson.JsonObject)
+	 */
+	@Override
+	public void check(JsonObject payload) throws SignatureException {
+		checkUri(serverUri,
+				Preconditions.checkNotNull(payload.get(JsonToken.AUDIENCE).getAsString(), "Audience cannot be null!"));
+	}
 }
