@@ -84,7 +84,7 @@ public class JsonTokenParser {
 	 *            The original encoded representation of a JWT
 	 * @return Unverified contents of the JWT as a JsonToken
 	 */
-	public JsonToken deserialize(String tokenString) throws Exception {
+	public JsonToken deserialize(String tokenString) throws SignatureException {
 		String[] pieces = splitTokenString(tokenString);
 		String jwtHeaderSegment = pieces[0];
 		String jwtPayloadSegment = pieces[1];
