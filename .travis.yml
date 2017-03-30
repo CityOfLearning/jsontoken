@@ -13,7 +13,7 @@ before_install:
 
 # Tell Travis to build the project.
 script:
-  - ./gradlew build -S
+  - ./gradlew build -S -x test 
   
 notifications:
   slack: dynminecraft:S9ZN1GrxrmZ7lLfZiaxCGYEH
