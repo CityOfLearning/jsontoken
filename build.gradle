@@ -26,5 +26,7 @@ dependencies {
     compile group: 'com.google.code.gson', name: 'gson', version: '1.7.2'
 	compile group: 'com.google.guava', name: 'guava', version: '19.0'
 	compile group: 'commons-codec', name: 'commons-codec', version: '1.9'
-	compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.2'	
+	compile group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5.2'
+	
+	testCompile 'junit:junit:4.12'
 }
